@@ -1,0 +1,12 @@
+#ce-side-nav {
+  .nav-list {
+    .nav-link {
+      color: #fff;
+      text-decoration: none;
+			&:visited {
+				color: #fff;
+        text-decoration: none;
+			}
+		}
+	}
+}
