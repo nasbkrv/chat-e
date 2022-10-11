@@ -1,11 +1,10 @@
-import * as React from 'react'
+import React, { useState } from 'react'
 import { styled, useTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import MuiDrawer from '@mui/material/Drawer'
 import MuiAppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import List from '@mui/material/List'
-import CssBaseline from '@mui/material/CssBaseline'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
@@ -19,11 +18,21 @@ import { Outlet, useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import './Drawer.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHouse, faUser, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
+import {
+	faComments,
+	faUser,
+	faRightFromBracket
+} from '@fortawesome/free-solid-svg-icons'
 import { getAuth, signOut } from 'firebase/auth'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserData } from '../../redux/features/user/userSlice'
 import Loader from '../Loader/Loader'
+import Grid from '@mui/material/Unstable_Grid2/Grid2'
+import { Avatar, TextField } from '@mui/material'
+import NestedListItem from '../List/NestedListItem'
+import { getAllUsers, getInitials } from '../../services/services'
+import { Container } from '@mui/system'
+
 const drawerWidth = 300
 
 const openedMixin = (theme) => ({
@@ -93,16 +102,22 @@ const Drawer = styled(MuiDrawer, {
 
 function MiniDrawer({ children }) {
 	const { loading } = useSelector((state) => state.loader)
+	const {
+		data: { friends, uid, username, photoURL, displayName }
+	} = useSelector((state) => state.user)
 	const theme = useTheme()
 	const auth = getAuth()
 	const navigate = useNavigate()
 	const dispatch = useDispatch()
-	const [open, setOpen] = React.useState(true)
+	const [open, setOpen] = useState(true)
+	const [searchFriends, setSearchFriends] = useState([])
+	const [allUsers, setAllUsers] = useState([])
+
 	const routes = [
 		{
 			path: '/',
-			name: 'Homepage',
-			icon: faHouse
+			name: 'Chatrooms',
+			icon: faComments
 		},
 		{
 			path: '/profile',
@@ -113,25 +128,43 @@ function MiniDrawer({ children }) {
 	const handleDrawerOpen = () => {
 		setOpen(true)
 	}
-
 	const handleDrawerClose = () => {
 		setOpen(false)
 	}
-
 	function handleLogout() {
 		signOut(auth).then(() => {
-			dispatch(setUserData(null))
+			dispatch(setUserData({}))
 			localStorage.removeItem('at')
 			navigate('/sign-in')
 		})
+	}
+	async function handleFriendSearch(e) {
+		const searchValue = e.target.value
+		if (searchValue === '') {
+			setSearchFriends([])
+			return
+		}
+		if (allUsers.length === 0) {
+			const res = await getAllUsers()
+			if (res) {
+				setAllUsers(res)
+			}
+		}
+		const filtered = allUsers.filter(
+			(obj) => obj.username.includes(searchValue) && obj.uid !== uid
+		)
+		if (filtered.length === 0 || searchValue === '') {
+			setSearchFriends([])
+		} else {
+			setSearchFriends(filtered)
+		}
 	}
 	return (
 		<>
 			{loading ? (
 				<Loader />
 			) : (
-				<Box sx={{ display: 'flex' }}>
-					<CssBaseline />
+				<Box sx={{ display: 'flex', height: '100%' }}>
 					<AppBar position='fixed' open={open}>
 						<Toolbar>
 							<IconButton
@@ -145,15 +178,45 @@ function MiniDrawer({ children }) {
 								}}>
 								<MenuIcon />
 							</IconButton>
-							<Typography variant='h6' noWrap component='div'>
-								<Box
-									component='span'
-									color={'#ffca28'}
-									fontSize={30}
-									className='logo-font'>
-									Chat-E
-								</Box>
-							</Typography>
+							<Container maxWidth='fluid'>
+								<Grid container spacing={2}>
+									<Grid xs={12} md={10}>
+										<Typography variant='h6' noWrap component='div'>
+											<Box
+												component='span'
+												color={'#ffca28'}
+												fontSize={30}
+												className='logo-font'>
+												Chat-E
+											</Box>
+										</Typography>
+									</Grid>
+									<Grid xs={12} md={2} display='flex' alignItems='center'>
+										<Box padding='0 10px' display='flex' alignItems='center'>
+											<Link
+												className='profile-link'
+												to={`/profile`}
+												style={{ padding: '5px 15px', fontSize: 18 }}>
+												{username}
+											</Link>
+											<Link className='profile-link' to={`/profile`}>
+												{photoURL ? (
+													<Avatar
+														alt={getInitials(displayName)}
+														src={photoURL}
+													/>
+												) : (
+													<Avatar
+														alt={getInitials(displayName)}
+														sx={{ bgcolor: '#ffca28', color: '#21242e' }}>
+														{getInitials(displayName)}
+													</Avatar>
+												)}
+											</Link>
+										</Box>
+									</Grid>
+								</Grid>
+							</Container>
 						</Toolbar>
 					</AppBar>
 					<Drawer variant='permanent' open={open} id='ce-side-nav'>
@@ -174,15 +237,20 @@ function MiniDrawer({ children }) {
 									disablePadding
 									sx={{ display: 'block' }}>
 									<Link className='nav-link' to={route.path}>
-										<ListItemButton>
+										<ListItemButton sx={{ minHeight: '48px' }}>
 											<FontAwesomeIcon
 												icon={route.icon}
-												style={{ minWidth: '50px' }}
+												style={{
+													minWidth: open ? '50px' : '20px',
+													margin: '0 auto'
+												}}
 											/>
-											<ListItemText
-												primary={route.name}
-												sx={{ opacity: open ? 1 : 0 }}
-											/>
+											{open && (
+												<ListItemText
+													primary={route.name}
+													sx={{ opacity: open ? 1 : 0 }}
+												/>
+											)}
 										</ListItemButton>
 									</Link>
 								</ListItem>
@@ -195,25 +263,64 @@ function MiniDrawer({ children }) {
 								sx={{ display: 'block' }}
 								onClick={handleLogout}>
 								<Link className='nav-link'>
-									<ListItemButton>
+									<ListItemButton sx={{ minHeight: '48px' }}>
 										<FontAwesomeIcon
 											icon={faRightFromBracket}
-											style={{ minWidth: '50px', transform: 'scaleX(-1)' }}
+											style={{
+												minWidth: open ? '50px' : '20px',
+												transform: 'scaleX(-1)',
+												margin: '0 auto'
+											}}
 										/>
-										<ListItemText
-											primary={'Logout'}
-											sx={{ opacity: open ? 1 : 0 }}
-										/>
+										{open && (
+											<ListItemText
+												primary={'Logout'}
+												sx={{ opacity: open ? 1 : 0 }}
+											/>
+										)}
 									</ListItemButton>
 								</Link>
 							</ListItem>
 						</List>
 					</Drawer>
-					<Box component='main' sx={{ flexGrow: 1, p: 3 }}>
-						<DrawerHeader />
-						<Outlet />
-						{children}
-					</Box>
+					<Container maxWidth='fluid' style={{ height: 'calc(100% - 56px)' }}>
+						<Box sx={{ flexGrow: 1, height: '100%' }}>
+							<DrawerHeader />
+							<Grid
+								container
+								spacing={2}
+								maxWidth='fluid'
+								style={{ height: '100%' }}>
+								<Grid xs={12} md={10}>
+									<div className='chatrooms-list'>{children}</div>
+								</Grid>
+								<Grid md={2} style={{ borderLeft: '1px solid #272727' }}>
+									<div className='friends-list'>
+										<TextField
+											className='search-friends'
+											label='Search for friends'
+											variant='outlined'
+											size='small'
+											fullWidth
+											onChange={handleFriendSearch}
+										/>
+										<Box>
+											{searchFriends.map((user) => (
+												<NestedListItem {...user} key={user.username} />
+											))}
+										</Box>
+										{friends?.length === 0 ? (
+											<Box padding='5px 15px'>
+												<p>You currently have no friends :( </p>
+											</Box>
+										) : (
+											''
+										)}
+									</div>
+								</Grid>
+							</Grid>
+						</Box>
+					</Container>
 				</Box>
 			)}
 		</>

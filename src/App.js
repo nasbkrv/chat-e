@@ -108,6 +108,16 @@ function App({ dispatch }) {
 						}
 					/>
 					<Route
+						path='/user/:username'
+						element={
+							<PrivateRoute isExpired={isExpired}>
+								<Drawer>
+									<Profile />
+								</Drawer>
+							</PrivateRoute>
+						}
+					/>
+					<Route
 						path='/sign-in'
 						element={
 							<PublicRoute isExpired={isExpired}>

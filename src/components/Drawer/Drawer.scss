@@ -7,6 +7,13 @@
 				color: #fff;
         text-decoration: none;
 			}
+      svg{
+        transition: min-width .3s ease-in-out;
+      }
 		}
 	}
+}
+.profile-link{
+  color: #fff;
+  text-decoration: none;
 }

@@ -1,0 +1,29 @@
+.friends-list {
+	padding-top: 16px;
+	.search-friends {
+		.MuiInputBase-root {
+			background-color: #272727;
+			&.Mui-focused {
+				.MuiOutlinedInput-notchedOutline {
+					border-color: #ffca28;
+				}
+			}
+			& .MuiOutlinedInput-notchedOutline {
+				border-color: rgba(255, 255, 255, 0.3);
+				color: #fff;
+			}
+		}
+		.MuiInputLabel-outlined {
+			&.Mui-focused {
+				color: #ffca28;
+			}
+		}
+	}
+}
+.chatrooms-list{
+	padding-top:  1.5rem;
+	h2{
+		margin: 0;
+		margin-top: .5rem;
+	}
+}

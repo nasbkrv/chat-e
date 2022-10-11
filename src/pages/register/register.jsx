@@ -8,6 +8,7 @@ import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import db from '../../firebase/firebase'
 import Loader from '../../components/Loader/Loader'
+import { userExists } from '../../services/services'
 const inputStyles = {
 	marginBottom: 2,
 	'.MuiInput-underline:after': {
@@ -21,6 +22,7 @@ function Register({ loading }) {
 	const auth = getAuth()
 	const [invalidForm, setInvalidForm] = useState({
 		email: false,
+		username: false,
 		password: false,
 		rePasword: false,
 		msg: ''
@@ -29,8 +31,24 @@ function Register({ loading }) {
 	if (auth.currentUser) {
 		return <Navigate to='/' />
 	}
-	function validateRegister(email, password, rePassword) {
+	async function validateRegister(username, email, password, rePassword) {
 		const emailPattern = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/
+		const usernamePattern = /^[a-z0-9_-]{3,16}$/gim
+		const existingUser = await userExists(username)
+		if (!usernamePattern.test(username)) {
+			return {
+				invalid: true,
+				msg: 'Username must be at least 3 characters long. It can contain: letters,  digits, "-" and "_"',
+				code: 'invalid-username'
+			}
+		}
+		if (existingUser) {
+			return {
+				invalid: true,
+				msg: 'Username already exists',
+				code: 'invalid-username'
+			}
+		}
 		if (!emailPattern.test(email)) {
 			return {
 				invalid: true,
@@ -54,42 +72,54 @@ function Register({ loading }) {
 		}
 		return { invalid: false, msg: '', code: null }
 	}
-	function handleRegister(event) {
+	async function handleRegister(event) {
 		event.preventDefault()
+		setInvalidForm({
+			username: false,
+			email: false,
+			password: false,
+			rePasword: false,
+			msg:''
+		})
 		const formData = new FormData(event.target)
-		const { email, password, rePassword } = Object.fromEntries(
+		const { username, email, password, rePassword } = Object.fromEntries(
 			formData.entries()
 		)
-		const { invalid, msg, code } = validateRegister(email, password, rePassword)
+		const { invalid, msg, code } = await validateRegister(
+			username,
+			email,
+			password,
+			rePassword
+		)
 		setFailedReg(null)
 		if (invalid) {
-			setInvalidForm({
-				email: false,
-				password: false,
-				rePasword: false
-			})
 			switch (true) {
+				case code === 'invalid-username':
+					setInvalidForm({
+						username: true,
+						...invalidForm,
+						msg
+					})
+					break
+
 				case code === 'invalid-email':
 					setInvalidForm({
 						email: true,
-						password: false,
-						rePasword: false,
+						...invalidForm,
 						msg
 					})
 					break
 				case code === 'pass-short':
 					setInvalidForm({
-						email: false,
 						password: true,
-						rePasword: false,
+						...invalidForm,
 						msg
 					})
 					break
 				case code === 'pass-mismatch':
 					setInvalidForm({
-						email: false,
-						password: false,
 						rePasword: true,
+						...invalidForm,
 						msg
 					})
 					break
@@ -98,47 +128,42 @@ function Register({ loading }) {
 					break
 			}
 		} else {
-			setInvalidForm({
-				email: false,
-				password: false,
-				rePasword: false,
-				msg
-			})
-			createUserWithEmailAndPassword(auth, email, password)
-				.then(async (res) => {
-					const {
-						displayName,
-						email,
-						emailVerified,
-						metadata: { createdAt, lastLoginAt },
-						phoneNumber,
-						photoURL,
-						uid
-					} = res.user
-					await setDoc(doc(db, 'users', uid), {
-						displayName,
-						email,
-						emailVerified,
-						createdAt,
-						lastLoginAt,
-						phoneNumber,
-						photoURL,
-						chatrooms: [],
-						friends: [],
-						username: ''
-					})
-				})
-				.catch((error) => {
-					const errorCode = error.code
-					switch (true) {
-						case errorCode === 'auth/email-already-in-use':
-							setFailedReg('Email address already in use')
-							break
-						default:
-							break
-					}
-					console.error(error)
-				})
+			// createUserWithEmailAndPassword(auth, email, password)
+			// 	.then(async (res) => {
+			// 		const {
+			// 			displayName,
+			// 			email,
+			// 			emailVerified,
+			// 			metadata: { createdAt, lastLoginAt },
+			// 			phoneNumber,
+			// 			photoURL,
+			// 			uid
+			// 		} = res.user
+			// 		await setDoc(doc(db, 'users', uid), {
+			// 			displayName,
+			// 			email,
+			// 			emailVerified,
+			// 			createdAt,
+			// 			lastLoginAt,
+			// 			phoneNumber,
+			// 			photoURL,
+			// 			chatrooms: [],
+			// 			friends: [],
+			// 			requests: [],
+			// 			username: username
+			// 		})
+			// 	})
+			// 	.catch((error) => {
+			// 		const errorCode = error.code
+			// 		switch (true) {
+			// 			case errorCode === 'auth/email-already-in-use':
+			// 				setFailedReg('Email address already in use')
+			// 				break
+			// 			default:
+			// 				break
+			// 		}
+			// 		console.error(error)
+			// 	})
 		}
 	}
 
@@ -158,7 +183,8 @@ function Register({ loading }) {
 						<Grid xs={12} md={6}>
 							<Box
 								width='100%'
-								height={500}
+								height='100%'
+								minHeight={500}
 								bgcolor={'#21242e'}
 								borderRadius={2}
 								padding={'35px 40px'}>
@@ -184,7 +210,8 @@ function Register({ loading }) {
 						<Grid xs={12} md={6}>
 							<Box
 								width='100%'
-								height={500}
+								height='100%'
+								minHeight={500}
 								bgcolor={'#21242e'}
 								borderRadius={2}
 								padding={'55px 70px'}>
@@ -207,6 +234,17 @@ function Register({ loading }) {
 									display={'flex'}
 									className='login-form'
 									paddingTop='40px'>
+									<TextField
+										id='sign-up-username'
+										name='username'
+										label='Username'
+										type='username'
+										variant='standard'
+										helperText={invalidForm.username ? invalidForm.msg : ''}
+										error={invalidForm.username}
+										sx={inputStyles}
+										className='input-field'
+									/>
 									<TextField
 										id='sign-up-email'
 										name='email'
