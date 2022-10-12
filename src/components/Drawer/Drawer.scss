@@ -1,19 +1,41 @@
 #ce-side-nav {
-  .nav-list {
-    .nav-link {
-      color: #fff;
-      text-decoration: none;
+	.nav-list {
+		.nav-link {
+			color: #fff;
+			text-decoration: none;
 			&:visited {
 				color: #fff;
-        text-decoration: none;
+				text-decoration: none;
 			}
-      svg{
-        transition: min-width .3s ease-in-out;
-      }
+			svg {
+				transition: min-width 0.3s ease-in-out;
+			}
 		}
 	}
 }
-.profile-link{
-  color: #fff;
-  text-decoration: none;
+.friend-req-notif {
+	.btns-wrap {
+    margin-top: .5rem;
+		.btn-accept {
+			color: #fff;
+			background-color: #229e32;
+			&:hover {
+				background-color: rgba(34, 158, 51, 0.7);
+			}
+		}
+		.btn-decline {
+			color: #ff0000;
+			border: 1px solid rgba(255, 0, 0, 0.45);
+			background-color: rgba(255, 0, 0, 0.2);
+			margin-left: .75rem;
+			&:hover {
+				border: 1px solid rgba(255, 0, 0, 0.5);
+				background-color: rgba(255, 0, 0, 0.3);
+			}
+		}
+	}
+}
+.profile-link {
+	color: #fff;
+	text-decoration: none;
 }

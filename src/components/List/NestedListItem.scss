@@ -1,0 +1,16 @@
+.user-search-list {
+	.list-item-btn {
+		border-radius: 3px;
+		border: 1px solid transparent;
+		&.req-sent {
+			border: 1px solid rgba(255, 0, 0, 0.45);
+			background-color: rgba(255, 0, 0, 0.2);
+			color: #ff0000;
+			border-radius: 3px;
+			&:hover {
+				border: 1px solid rgba(255, 0, 0, 0.5);
+				background-color: rgba(255, 0, 0, 0.3);
+			}
+		}
+	}
+}

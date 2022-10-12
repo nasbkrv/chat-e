@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import './NestedListItem.scss'
 import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
@@ -6,17 +7,47 @@ import ListItemText from '@mui/material/ListItemText'
 import Collapse from '@mui/material/Collapse'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
-import { Avatar } from '@mui/material'
+import { Avatar, Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUserPlus, faIdCard } from '@fortawesome/free-solid-svg-icons'
+import {
+	faUserPlus,
+	faIdCard,
+	faUserXmark
+} from '@fortawesome/free-solid-svg-icons'
 import { useNavigate } from 'react-router'
 import { getInitials } from '../../services/services'
-function NestedListItem({ photoURL, username, displayName }) {
+import { useSelector } from 'react-redux'
+import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore'
+import db from '../../firebase/firebase'
+function NestedListItem({
+	photoURL,
+	username,
+	displayName,
+	uid: searchUid,
+	requests
+}) {
 	const navigate = useNavigate()
+	const { uid: currentUid } = useSelector((state) => state.user.data)
 	const [open, setOpen] = useState(false)
-
+	const [frReq, setFrReq] = useState(requests.includes(currentUid))
 	function handleClick() {
 		setOpen(!open)
+	}
+	async function sendFriendReq() {
+		const userRef = doc(db, 'users', searchUid)
+		await updateDoc(userRef, {
+			requests: arrayUnion(currentUid)
+		}).then(() => {
+			setFrReq(true)
+		})
+	}
+	async function cancelFriendReq() {
+		const userRef = doc(db, 'users', searchUid)
+		await updateDoc(userRef, {
+			requests: arrayRemove(currentUid)
+		}).then(() => {
+			setFrReq(false)
+		})
 	}
 	return (
 		<List
@@ -39,12 +70,18 @@ function NestedListItem({ photoURL, username, displayName }) {
 				{open ? <ExpandLess /> : <ExpandMore />}
 			</ListItemButton>
 			<Collapse in={open} timeout='auto' unmountOnExit>
-				<List component='div' disablePadding>
-					<ListItemButton sx={{ pl: 4 }}>
-						<FontAwesomeIcon icon={faUserPlus} style={{ marginRight: 15 }} />
-						<ListItemText primary='Add Friend' />
+				<List component='div' disablePadding className='user-search-list'>
+					<ListItemButton
+						onClick={frReq ? cancelFriendReq : sendFriendReq}
+						className={`${frReq ? 'req-sent' : ''} list-item-btn`}>
+						<FontAwesomeIcon
+							icon={frReq ? faUserXmark : faUserPlus}
+							style={{ marginRight: 15 }}
+						/>
+						<ListItemText primary={frReq ? 'Canel Request' : 'Add Friend'} />
 					</ListItemButton>
-					<ListItemButton sx={{ pl: 4 }}>
+					<Divider />
+					<ListItemButton className='list-item-btn'>
 						<FontAwesomeIcon icon={faIdCard} style={{ marginRight: 15 }} />
 						<ListItemText
 							primary='View Profile'

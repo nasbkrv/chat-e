@@ -128,42 +128,42 @@ function Register({ loading }) {
 					break
 			}
 		} else {
-			// createUserWithEmailAndPassword(auth, email, password)
-			// 	.then(async (res) => {
-			// 		const {
-			// 			displayName,
-			// 			email,
-			// 			emailVerified,
-			// 			metadata: { createdAt, lastLoginAt },
-			// 			phoneNumber,
-			// 			photoURL,
-			// 			uid
-			// 		} = res.user
-			// 		await setDoc(doc(db, 'users', uid), {
-			// 			displayName,
-			// 			email,
-			// 			emailVerified,
-			// 			createdAt,
-			// 			lastLoginAt,
-			// 			phoneNumber,
-			// 			photoURL,
-			// 			chatrooms: [],
-			// 			friends: [],
-			// 			requests: [],
-			// 			username: username
-			// 		})
-			// 	})
-			// 	.catch((error) => {
-			// 		const errorCode = error.code
-			// 		switch (true) {
-			// 			case errorCode === 'auth/email-already-in-use':
-			// 				setFailedReg('Email address already in use')
-			// 				break
-			// 			default:
-			// 				break
-			// 		}
-			// 		console.error(error)
-			// 	})
+			createUserWithEmailAndPassword(auth, email, password)
+				.then(async (res) => {
+					const {
+						displayName,
+						email,
+						emailVerified,
+						metadata: { createdAt, lastLoginAt },
+						phoneNumber,
+						photoURL,
+						uid
+					} = res.user
+					await setDoc(doc(db, 'users', uid), {
+						displayName,
+						email,
+						emailVerified,
+						createdAt,
+						lastLoginAt,
+						phoneNumber,
+						photoURL,
+						chatrooms: [],
+						friends: [],
+						requests: [],
+						username: username
+					})
+				})
+				.catch((error) => {
+					const errorCode = error.code
+					switch (true) {
+						case errorCode === 'auth/email-already-in-use':
+							setFailedReg('Email address already in use')
+							break
+						default:
+							break
+					}
+					console.error(error)
+				})
 		}
 	}
 

@@ -1,8 +1,5 @@
-import React, { useState } from 'react'
-import { styled, useTheme } from '@mui/material/styles'
+import React, { useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
-import MuiDrawer from '@mui/material/Drawer'
-import MuiAppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import List from '@mui/material/List'
 import Typography from '@mui/material/Typography'
@@ -10,21 +7,21 @@ import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import MenuIcon from '@mui/icons-material/Menu'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
-import { Outlet, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import './Drawer.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
 	faComments,
 	faUser,
-	faRightFromBracket
+	faRightFromBracket,
+	faEnvelope
 } from '@fortawesome/free-solid-svg-icons'
 import { getAuth, signOut } from 'firebase/auth'
-import { useDispatch, useSelector } from 'react-redux'
+import { connect } from 'react-redux'
 import { setUserData } from '../../redux/features/user/userSlice'
 import Loader from '../Loader/Loader'
 import Grid from '@mui/material/Unstable_Grid2/Grid2'
@@ -32,87 +29,43 @@ import { Avatar, TextField } from '@mui/material'
 import NestedListItem from '../List/NestedListItem'
 import { getAllUsers, getInitials } from '../../services/services'
 import { Container } from '@mui/system'
+import { DrawerHeader, Drawer, AppBar, StyledBadge } from './DrawerStyles'
+import {
+	collection,
+	doc,
+	documentId,
+	getDocs,
+	onSnapshot,
+	query,
+	where
+} from 'firebase/firestore'
+import db from '../../firebase/firebase'
+import Button from '@mui/material/Button'
+import Menu from '@mui/material/Menu'
+import Fade from '@mui/material/Fade'
 
-const drawerWidth = 300
-
-const openedMixin = (theme) => ({
-	width: drawerWidth,
-	transition: theme.transitions.create('width', {
-		easing: theme.transitions.easing.sharp,
-		duration: theme.transitions.duration.enteringScreen
-	}),
-	overflowX: 'hidden'
-})
-
-const closedMixin = (theme) => ({
-	transition: theme.transitions.create('width', {
-		easing: theme.transitions.easing.sharp,
-		duration: theme.transitions.duration.leavingScreen
-	}),
-	overflowX: 'hidden',
-	width: `calc(${theme.spacing(7)} + 1px)`,
-	[theme.breakpoints.up('sm')]: {
-		width: `calc(${theme.spacing(8)} + 1px)`
-	}
-})
-
-const DrawerHeader = styled('div')(({ theme }) => ({
-	display: 'flex',
-	alignItems: 'center',
-	justifyContent: 'flex-end',
-	padding: theme.spacing(0, 1),
-	// necessary for content to be below app bar
-	...theme.mixins.toolbar
-}))
-
-const AppBar = styled(MuiAppBar, {
-	shouldForwardProp: (prop) => prop !== 'open'
-})(({ theme, open }) => ({
-	zIndex: theme.zIndex.drawer + 1,
-	transition: theme.transitions.create(['width', 'margin'], {
-		easing: theme.transitions.easing.sharp,
-		duration: theme.transitions.duration.leavingScreen
-	}),
-	...(open && {
-		marginLeft: drawerWidth,
-		width: `calc(100% - ${drawerWidth}px)`,
-		transition: theme.transitions.create(['width', 'margin'], {
-			easing: theme.transitions.easing.sharp,
-			duration: theme.transitions.duration.enteringScreen
-		})
-	})
-}))
-
-const Drawer = styled(MuiDrawer, {
-	shouldForwardProp: (prop) => prop !== 'open'
-})(({ theme, open }) => ({
-	width: drawerWidth,
-	flexShrink: 0,
-	whiteSpace: 'nowrap',
-	boxSizing: 'border-box',
-	...(open && {
-		...openedMixin(theme),
-		'& .MuiDrawer-paper': openedMixin(theme)
-	}),
-	...(!open && {
-		...closedMixin(theme),
-		'& .MuiDrawer-paper': closedMixin(theme)
-	})
-}))
-
-function MiniDrawer({ children }) {
-	const { loading } = useSelector((state) => state.loader)
-	const {
-		data: { friends, uid, username, photoURL, displayName }
-	} = useSelector((state) => state.user)
-	const theme = useTheme()
+function MiniDrawer({
+	loader: { loading },
+	user: {
+		data: { friends, uid, username, photoURL, displayName, requests }
+	},
+	dispatch,
+	children
+}) {
 	const auth = getAuth()
-	const navigate = useNavigate()
-	const dispatch = useDispatch()
 	const [open, setOpen] = useState(true)
 	const [searchFriends, setSearchFriends] = useState([])
 	const [allUsers, setAllUsers] = useState([])
-
+	const [requestsUsers, setRequestsUsers] = useState([])
+	const [anchorEl, setAnchorEl] = useState(false)
+	const openNotif = Boolean(anchorEl)
+	const navigate = useNavigate()
+	const handleNotifShow = (event) => {
+		setAnchorEl(event.currentTarget)
+	}
+	const handleNotifHide = () => {
+		setAnchorEl(null)
+	}
 	const routes = [
 		{
 			path: '/',
@@ -159,6 +112,32 @@ function MiniDrawer({ children }) {
 			setSearchFriends(filtered)
 		}
 	}
+	useEffect(() => {
+		async function fetchUsers() {
+			const q = query(
+				collection(db, 'users'),
+				where(documentId(), 'in', requests)
+			)
+			await getDocs(q).then((res) => {
+				res.docs.forEach((doc) => {
+					setRequestsUsers((prevState) => [...prevState, doc.data()])
+				})
+			})
+		}
+		if (requests?.length > 0) {
+			if (requestsUsers.length === 0) fetchUsers()
+		}
+		if (uid) {
+			const userRef = doc(db, 'users', uid)
+			const unsubscribe = onSnapshot(userRef, (doc) => {
+				dispatch(setUserData(doc.data()))
+			})
+			return () => {
+				unsubscribe()
+			}
+		}
+	}, [uid, dispatch, requests, requestsUsers.length])
+
 	return (
 		<>
 			{loading ? (
@@ -193,12 +172,6 @@ function MiniDrawer({ children }) {
 									</Grid>
 									<Grid xs={12} md={2} display='flex' alignItems='center'>
 										<Box padding='0 10px' display='flex' alignItems='center'>
-											<Link
-												className='profile-link'
-												to={`/profile`}
-												style={{ padding: '5px 15px', fontSize: 18 }}>
-												{username}
-											</Link>
 											<Link className='profile-link' to={`/profile`}>
 												{photoURL ? (
 													<Avatar
@@ -213,6 +186,78 @@ function MiniDrawer({ children }) {
 													</Avatar>
 												)}
 											</Link>
+											<Link
+												className='profile-link'
+												to={`/profile`}
+												style={{ padding: '5px 15px', fontSize: 18 }}>
+												{username}
+											</Link>
+											<Button
+												id='fade-button'
+												aria-controls={openNotif ? 'fade-menu' : undefined}
+												aria-haspopup='true'
+												aria-expanded={openNotif ? 'true' : undefined}
+												onClick={handleNotifShow}>
+												{requests.length > 0 ? (
+													<StyledBadge
+														badgeContent={requests.length}
+														color='secondary'>
+														<FontAwesomeIcon
+															icon={faEnvelope}
+															color='#ffca28'
+															fontSize={20}
+														/>
+													</StyledBadge>
+												) : (
+													<FontAwesomeIcon
+														icon={faEnvelope}
+														color='#ffca28'
+														fontSize={20}
+													/>
+												)}
+											</Button>
+											<Menu
+												className='friend-req-notif'
+												MenuListProps={{
+													'aria-labelledby': 'fade-button'
+												}}
+												anchorEl={anchorEl}
+												open={openNotif}
+												onClose={handleNotifHide}
+												TransitionComponent={Fade}>
+												{requestsUsers.map((user) => (
+													<Box
+														key={user.username}
+														display='flex'
+														alignItems='center'
+														padding='5px 15px'>
+														<Avatar
+															alt={getInitials(displayName)}
+															src={photoURL}
+															sx={{ width: 56, height: 56 }}
+														/>
+														<Box marginLeft={2}>
+															<Box component='p' margin={0}>
+																{user.username}
+															</Box>
+															<Box className='btns-wrap'>
+																<Button
+																	size='small'
+																	className='btn-accept'
+																	variant='contained'>
+																	Accept
+																</Button>
+																<Button
+																	size='small'
+																	className='btn-decline'
+																	variant='outlined'>
+																	Decline
+																</Button>
+															</Box>
+														</Box>
+													</Box>
+												))}
+											</Menu>
 										</Box>
 									</Grid>
 								</Grid>
@@ -222,11 +267,7 @@ function MiniDrawer({ children }) {
 					<Drawer variant='permanent' open={open} id='ce-side-nav'>
 						<DrawerHeader>
 							<IconButton onClick={handleDrawerClose}>
-								{theme.direction === 'rtl' ? (
-									<ChevronRightIcon />
-								) : (
-									<ChevronLeftIcon />
-								)}
+								<ChevronLeftIcon />
 							</IconButton>
 						</DrawerHeader>
 						<Divider />
@@ -291,10 +332,10 @@ function MiniDrawer({ children }) {
 								spacing={2}
 								maxWidth='fluid'
 								style={{ height: '100%' }}>
-								<Grid xs={12} md={10}>
+								<Grid xs={12} md={9}>
 									<div className='chatrooms-list'>{children}</div>
 								</Grid>
-								<Grid md={2} style={{ borderLeft: '1px solid #272727' }}>
+								<Grid md={3} style={{ borderLeft: '1px solid #272727' }}>
 									<div className='friends-list'>
 										<TextField
 											className='search-friends'
@@ -326,4 +367,7 @@ function MiniDrawer({ children }) {
 		</>
 	)
 }
-export default MiniDrawer
+const mapStateToProps = (state) => {
+	return state
+}
+export default connect(mapStateToProps)(MiniDrawer)
