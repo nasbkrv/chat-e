@@ -8,7 +8,7 @@ import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import db from '../../firebase/firebase'
 import Loader from '../../components/Loader/Loader'
-import { userExists } from '../../services/services'
+import { getUserByUsername } from '../../services/services'
 const inputStyles = {
 	marginBottom: 2,
 	'.MuiInput-underline:after': {
@@ -34,7 +34,7 @@ function Register({ loading }) {
 	async function validateRegister(username, email, password, rePassword) {
 		const emailPattern = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/
 		const usernamePattern = /^[a-z0-9_-]{3,16}$/gim
-		const existingUser = await userExists(username)
+		const existingUser = await getUserByUsername(username)
 		if (!usernamePattern.test(username)) {
 			return {
 				invalid: true,

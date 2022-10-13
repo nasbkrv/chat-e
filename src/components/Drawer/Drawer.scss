@@ -7,6 +7,13 @@
 				color: #fff;
 				text-decoration: none;
 			}
+			&.active {
+				display: block;
+				.MuiButtonBase-root {
+					background-color: #ffca28;
+					color: #21242e;
+				}
+			}
 			svg {
 				transition: min-width 0.3s ease-in-out;
 			}
@@ -15,7 +22,7 @@
 }
 .friend-req-notif {
 	.btns-wrap {
-    margin-top: .5rem;
+		margin-top: 0.5rem;
 		.btn-accept {
 			color: #fff;
 			background-color: #229e32;
@@ -27,7 +34,7 @@
 			color: #ff0000;
 			border: 1px solid rgba(255, 0, 0, 0.45);
 			background-color: rgba(255, 0, 0, 0.2);
-			margin-left: .75rem;
+			margin-left: 0.75rem;
 			&:hover {
 				border: 1px solid rgba(255, 0, 0, 0.5);
 				background-color: rgba(255, 0, 0, 0.3);

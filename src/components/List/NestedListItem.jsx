@@ -7,7 +7,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Collapse from '@mui/material/Collapse'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
-import { Avatar, Divider } from '@mui/material'
+import { Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
 	faUserPlus,
@@ -15,36 +15,41 @@ import {
 	faUserXmark
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigate } from 'react-router'
-import { getInitials } from '../../services/services'
 import { useSelector } from 'react-redux'
-import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore'
+import { arrayUnion, doc, getDoc, updateDoc } from 'firebase/firestore'
 import db from '../../firebase/firebase'
-function NestedListItem({
-	photoURL,
-	username,
-	displayName,
-	uid: searchUid,
-	requests
-}) {
+import AvatarPhoto from '../AvatarPhoto/AvatarPhoto'
+function NestedListItem(props) {
+	const { photoURL, username, displayName, uid: searchUid, requests } = props
 	const navigate = useNavigate()
-	const { uid: currentUid } = useSelector((state) => state.user.data)
+	const {
+		data: { uid: currentUid },
+		data: currentUserData
+	} = useSelector((state) => state.user)
 	const [open, setOpen] = useState(false)
-	const [frReq, setFrReq] = useState(requests.includes(currentUid))
+	const [frReq, setFrReq] = useState(
+		requests.some((obj) => obj.uid === currentUid)
+	)
 	function handleClick() {
 		setOpen(!open)
 	}
 	async function sendFriendReq() {
 		const userRef = doc(db, 'users', searchUid)
 		await updateDoc(userRef, {
-			requests: arrayUnion(currentUid)
+			requests: arrayUnion(currentUserData)
 		}).then(() => {
 			setFrReq(true)
 		})
 	}
 	async function cancelFriendReq() {
 		const userRef = doc(db, 'users', searchUid)
+		const userDoc = await getDoc(userRef)
+		// Get requests array and filter it out of current user
+		const requests = userDoc
+			.data()
+			.requests.filter((obj) => obj.uid !== currentUid)
 		await updateDoc(userRef, {
-			requests: arrayRemove(currentUid)
+			requests: requests
 		}).then(() => {
 			setFrReq(false)
 		})
@@ -56,15 +61,7 @@ function NestedListItem({
 			aria-labelledby='nested-list-subheader'>
 			<ListItemButton onClick={handleClick}>
 				<ListItemIcon>
-					{photoURL ? (
-						<Avatar alt={getInitials(displayName)} src={photoURL} />
-					) : (
-						<Avatar
-							alt='Remy Sharp'
-							sx={{ bgcolor: '#ffca28', color: '#21242e' }}>
-							{getInitials(displayName)}
-						</Avatar>
-					)}
+					<AvatarPhoto displayName={displayName} photoURL={photoURL} />
 				</ListItemIcon>
 				<ListItemText primary={username} />
 				{open ? <ExpandLess /> : <ExpandMore />}
@@ -81,14 +78,13 @@ function NestedListItem({
 						<ListItemText primary={frReq ? 'Canel Request' : 'Add Friend'} />
 					</ListItemButton>
 					<Divider />
-					<ListItemButton className='list-item-btn'>
+					<ListItemButton
+						className='list-item-btn'
+						onClick={() => {
+							navigate(`/user/${username}`, { state: props })
+						}}>
 						<FontAwesomeIcon icon={faIdCard} style={{ marginRight: 15 }} />
-						<ListItemText
-							primary='View Profile'
-							onClick={() => {
-								navigate(`/user/${username}`)
-							}}
-						/>
+						<ListItemText primary='View Profile' />
 					</ListItemButton>
 				</List>
 			</Collapse>

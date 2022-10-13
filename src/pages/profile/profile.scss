@@ -1,0 +1,12 @@
+.profile{
+  &-page{
+
+  }
+  &-header{
+    text-align: center;
+    .username-prefix{
+      color: rgb(70, 70, 70);
+      font-size: 28px;
+    }
+  }
+}

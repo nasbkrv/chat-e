@@ -7,7 +7,7 @@ import { Box } from '@mui/material'
 
 function Homepage() {
 	const {
-		data: { chatrooms, friends }
+		data: { chatrooms, }
 	} = useSelector((state) => state.user)
 
 	return (

@@ -31,10 +31,10 @@ export async function getAllUsers() {
 	return users
 }
 // Check if user exist by username
-export async function userExists(username) {
+export async function getUserByUsername(username) {
 	const q = query(collection(db, 'users'), where('username', '==', username))
 	const querySnapshot = await getDocs(q)
-	return !querySnapshot.empty
+	return querySnapshot.empty ? false : querySnapshot.docs.map((doc) => doc.data())
 }
 // Get user's initials from username
 export function getInitials(displayName) {

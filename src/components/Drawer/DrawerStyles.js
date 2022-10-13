@@ -1,7 +1,7 @@
 import { styled } from '@mui/material/styles'
 import MuiDrawer from '@mui/material/Drawer'
 import MuiAppBar from '@mui/material/AppBar'
-import { Badge } from '@mui/material'
+import { Badge, Menu } from '@mui/material'
 
 const drawerWidth = 300
 
@@ -81,5 +81,16 @@ export const StyledBadge = styled(Badge)(({ theme }) => ({
 		minWidth: '18px',
 		backgroundColor: 'red',
 		color: 'white'
+	}
+}))
+
+export const StyledNotifMenu = styled(Menu)(({ theme }) => ({
+	'& .MuiPaper-root': {
+		borderRadius: 6,
+		marginTop: theme.spacing(2),
+		minWidth: 250,
+		boxShadow:
+			'transparent 0px 0px 0px 0px, black 0px 0px 0px 0px, black 0px 5px 5px -3px, black 0px 4px 6px -2px',
+		
 	}
 }))

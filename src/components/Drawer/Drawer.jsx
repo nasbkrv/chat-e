@@ -11,38 +11,34 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import { useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import './Drawer.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
 	faComments,
 	faUser,
-	faRightFromBracket,
-	faEnvelope
+	faRightFromBracket
 } from '@fortawesome/free-solid-svg-icons'
 import { getAuth, signOut } from 'firebase/auth'
 import { connect } from 'react-redux'
 import { setUserData } from '../../redux/features/user/userSlice'
 import Loader from '../Loader/Loader'
 import Grid from '@mui/material/Unstable_Grid2/Grid2'
-import { Avatar, TextField } from '@mui/material'
+import { TextField } from '@mui/material'
 import NestedListItem from '../List/NestedListItem'
-import { getAllUsers, getInitials } from '../../services/services'
+import { getAllUsers } from '../../services/services'
 import { Container } from '@mui/system'
-import { DrawerHeader, Drawer, AppBar, StyledBadge } from './DrawerStyles'
+import { DrawerHeader, Drawer, AppBar } from './DrawerStyles'
 import {
 	collection,
-	doc,
 	documentId,
-	getDocs,
 	onSnapshot,
 	query,
 	where
 } from 'firebase/firestore'
 import db from '../../firebase/firebase'
-import Button from '@mui/material/Button'
-import Menu from '@mui/material/Menu'
-import Fade from '@mui/material/Fade'
+import NotifficationMenu from '../NotifficationMenu/NotifficationMenu'
+import AvatarPhoto from '../AvatarPhoto/AvatarPhoto'
 
 function MiniDrawer({
 	loader: { loading },
@@ -50,22 +46,15 @@ function MiniDrawer({
 		data: { friends, uid, username, photoURL, displayName, requests }
 	},
 	dispatch,
-	children
+	children,
+	user: { data: userData }
 }) {
 	const auth = getAuth()
 	const [open, setOpen] = useState(true)
 	const [searchFriends, setSearchFriends] = useState([])
 	const [allUsers, setAllUsers] = useState([])
-	const [requestsUsers, setRequestsUsers] = useState([])
-	const [anchorEl, setAnchorEl] = useState(false)
-	const openNotif = Boolean(anchorEl)
 	const navigate = useNavigate()
-	const handleNotifShow = (event) => {
-		setAnchorEl(event.currentTarget)
-	}
-	const handleNotifHide = () => {
-		setAnchorEl(null)
-	}
+
 	const routes = [
 		{
 			path: '/',
@@ -113,30 +102,19 @@ function MiniDrawer({
 		}
 	}
 	useEffect(() => {
-		async function fetchUsers() {
-			const q = query(
+		if (uid) {
+			const userRef = query(
 				collection(db, 'users'),
-				where(documentId(), 'in', requests)
+				where(documentId(), '==', uid)
 			)
-			await getDocs(q).then((res) => {
-				res.docs.forEach((doc) => {
-					setRequestsUsers((prevState) => [...prevState, doc.data()])
+			const unsubscribe = onSnapshot(userRef, (snapshot) => {
+				snapshot.docChanges().forEach((change) => {
+					dispatch(setUserData(change.doc.data()))
 				})
 			})
+			return () => unsubscribe()
 		}
-		if (requests?.length > 0) {
-			if (requestsUsers.length === 0) fetchUsers()
-		}
-		if (uid) {
-			const userRef = doc(db, 'users', uid)
-			const unsubscribe = onSnapshot(userRef, (doc) => {
-				dispatch(setUserData(doc.data()))
-			})
-			return () => {
-				unsubscribe()
-			}
-		}
-	}, [uid, dispatch, requests, requestsUsers.length])
+	}, [dispatch, uid])
 
 	return (
 		<>
@@ -159,7 +137,7 @@ function MiniDrawer({
 							</IconButton>
 							<Container maxWidth='fluid'>
 								<Grid container spacing={2}>
-									<Grid xs={12} md={10}>
+									<Grid xs={9}>
 										<Typography variant='h6' noWrap component='div'>
 											<Box
 												component='span'
@@ -170,94 +148,25 @@ function MiniDrawer({
 											</Box>
 										</Typography>
 									</Grid>
-									<Grid xs={12} md={2} display='flex' alignItems='center'>
+									<Grid xs={3} display='flex' alignItems='center'>
 										<Box padding='0 10px' display='flex' alignItems='center'>
-											<Link className='profile-link' to={`/profile`}>
-												{photoURL ? (
-													<Avatar
-														alt={getInitials(displayName)}
-														src={photoURL}
-													/>
-												) : (
-													<Avatar
-														alt={getInitials(displayName)}
-														sx={{ bgcolor: '#ffca28', color: '#21242e' }}>
-														{getInitials(displayName)}
-													</Avatar>
-												)}
-											</Link>
-											<Link
+											<NavLink
 												className='profile-link'
 												to={`/profile`}
+												state={userData}>
+												<AvatarPhoto
+													displayName={displayName}
+													photoURL={photoURL}
+												/>
+											</NavLink>
+											<NavLink
+												className='profile-link'
+												to={`/profile`}
+												state={userData}
 												style={{ padding: '5px 15px', fontSize: 18 }}>
 												{username}
-											</Link>
-											<Button
-												id='fade-button'
-												aria-controls={openNotif ? 'fade-menu' : undefined}
-												aria-haspopup='true'
-												aria-expanded={openNotif ? 'true' : undefined}
-												onClick={handleNotifShow}>
-												{requests.length > 0 ? (
-													<StyledBadge
-														badgeContent={requests.length}
-														color='secondary'>
-														<FontAwesomeIcon
-															icon={faEnvelope}
-															color='#ffca28'
-															fontSize={20}
-														/>
-													</StyledBadge>
-												) : (
-													<FontAwesomeIcon
-														icon={faEnvelope}
-														color='#ffca28'
-														fontSize={20}
-													/>
-												)}
-											</Button>
-											<Menu
-												className='friend-req-notif'
-												MenuListProps={{
-													'aria-labelledby': 'fade-button'
-												}}
-												anchorEl={anchorEl}
-												open={openNotif}
-												onClose={handleNotifHide}
-												TransitionComponent={Fade}>
-												{requestsUsers.map((user) => (
-													<Box
-														key={user.username}
-														display='flex'
-														alignItems='center'
-														padding='5px 15px'>
-														<Avatar
-															alt={getInitials(displayName)}
-															src={photoURL}
-															sx={{ width: 56, height: 56 }}
-														/>
-														<Box marginLeft={2}>
-															<Box component='p' margin={0}>
-																{user.username}
-															</Box>
-															<Box className='btns-wrap'>
-																<Button
-																	size='small'
-																	className='btn-accept'
-																	variant='contained'>
-																	Accept
-																</Button>
-																<Button
-																	size='small'
-																	className='btn-decline'
-																	variant='outlined'>
-																	Decline
-																</Button>
-															</Box>
-														</Box>
-													</Box>
-												))}
-											</Menu>
+											</NavLink>
+											<NotifficationMenu />
 										</Box>
 									</Grid>
 								</Grid>
@@ -277,7 +186,7 @@ function MiniDrawer({
 									key={route.name}
 									disablePadding
 									sx={{ display: 'block' }}>
-									<Link className='nav-link' to={route.path}>
+									<NavLink to={route.path} className='nav-link' end>
 										<ListItemButton sx={{ minHeight: '48px' }}>
 											<FontAwesomeIcon
 												icon={route.icon}
@@ -293,7 +202,7 @@ function MiniDrawer({
 												/>
 											)}
 										</ListItemButton>
-									</Link>
+									</NavLink>
 								</ListItem>
 							))}
 						</List>
@@ -332,10 +241,10 @@ function MiniDrawer({
 								spacing={2}
 								maxWidth='fluid'
 								style={{ height: '100%' }}>
-								<Grid xs={12} md={9}>
-									<div className='chatrooms-list'>{children}</div>
+								<Grid xs={9}>
+									<div className='main-nav-window'>{children}</div>
 								</Grid>
-								<Grid md={3} style={{ borderLeft: '1px solid #272727' }}>
+								<Grid xs={3} style={{ borderLeft: '1px solid #272727' }}>
 									<div className='friends-list'>
 										<TextField
 											className='search-friends'

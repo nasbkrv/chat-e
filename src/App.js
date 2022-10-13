@@ -43,101 +43,95 @@ function App({ dispatch }) {
 	// 	}
 	// }, [])
 	useEffect(() => {
-		try {
-			const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-				dispatch(setLoading(true))
-				if (currentUser) {
-					localStorage.setItem('at', currentUser.accessToken)
-					const {
-						uid,
-						email,
-						emailVerified,
-						displayName,
-						accessToken,
-						phoneNumber,
-						photoURL
-					} = currentUser
-					const user = await getUserById(uid)
-					if (user) {
-						dispatch(
-							setUserData({
-								uid,
-								email,
-								emailVerified,
-								displayName,
-								accessToken,
-								phoneNumber,
-								photoURL,
-								...user
-							})
-						)
-					}
-					dispatch(setLoading(false))
-				} else {
-					localStorage.removeItem('at')
+		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+			dispatch(setLoading(true))
+			if (currentUser) {
+				localStorage.setItem('at', currentUser.accessToken)
+				const {
+					uid,
+					email,
+					emailVerified,
+					displayName,
+					accessToken,
+					phoneNumber,
+					photoURL
+				} = currentUser
+				const user = await getUserById(uid)
+				if (user) {
+					dispatch(
+						setUserData({
+							uid,
+							email,
+							emailVerified,
+							displayName,
+							accessToken,
+							phoneNumber,
+							photoURL,
+							...user
+						})
+					)
 				}
-			})
-			return () => {
-				unsubscribe()
+				dispatch(setLoading(false))
+			} else {
+				localStorage.removeItem('at')
 			}
-		} catch (error) {
-			console.log(error)
+		})
+		return () => {
+			unsubscribe()
 		}
 	}, [auth, dispatch])
 	return (
-		<>
-			<ThemeProvider theme={darkTheme}>
-				<CssBaseline />
-				<Routes>
-					<Route
-						path='/'
-						element={
-							<PrivateRoute isExpired={isExpired}>
-								<Drawer>
-									<Homepage />
-								</Drawer>
-							</PrivateRoute>
-						}
-					/>
-					<Route
-						path='/profile'
-						element={
-							<PrivateRoute isExpired={isExpired}>
-								<Drawer>
-									<Profile />
-								</Drawer>
-							</PrivateRoute>
-						}
-					/>
-					<Route
-						path='/user/:username'
-						element={
-							<PrivateRoute isExpired={isExpired}>
-								<Drawer>
-									<Profile />
-								</Drawer>
-							</PrivateRoute>
-						}
-					/>
-					<Route
-						path='/sign-in'
-						element={
-							<PublicRoute isExpired={isExpired}>
-								<Login />
-							</PublicRoute>
-						}
-					/>
-					<Route
-						path='/sign-up'
-						element={
-							<PublicRoute isExpired={isExpired}>
-								<Register />
-							</PublicRoute>
-						}
-					/>
-				</Routes>
-			</ThemeProvider>
-		</>
+		<ThemeProvider theme={darkTheme}>
+			<CssBaseline />
+			<Routes>
+				<Route
+					path='/'
+					element={
+						<PrivateRoute isExpired={isExpired}>
+							<Drawer>
+								<Homepage />
+							</Drawer>
+						</PrivateRoute>
+					}
+				/>
+				<Route
+					path='/profile'
+					element={
+						<PrivateRoute isExpired={isExpired}>
+							<Drawer>
+								<Profile />
+							</Drawer>
+						</PrivateRoute>
+					}
+				/>
+				<Route
+					path='/user/:username'
+					element={
+						<PrivateRoute isExpired={isExpired}>
+							<Drawer>
+								<Profile />
+							</Drawer>
+						</PrivateRoute>
+					}
+				/>
+				<Route
+					path='/sign-in'
+					element={
+						<PublicRoute isExpired={isExpired}>
+							<Login />
+						</PublicRoute>
+					}
+				/>
+				<Route
+					path='/sign-up'
+					element={
+						<PublicRoute isExpired={isExpired}>
+							<Register />
+						</PublicRoute>
+					}
+				/>
+			</Routes>
+		</ThemeProvider>
 	)
 }
 const mapStateToProps = (state) => {
