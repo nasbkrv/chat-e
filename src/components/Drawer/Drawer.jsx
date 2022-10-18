@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
 import List from '@mui/material/List'
-import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -26,7 +25,7 @@ import Loader from '../Loader/Loader'
 import Grid from '@mui/material/Unstable_Grid2/Grid2'
 import { TextField } from '@mui/material'
 import NestedListItem from '../List/NestedListItem'
-import { getAllUsers } from '../../services/services'
+import { getAllUsers, getUserById, openChatroom } from '../../services/services'
 import { Container } from '@mui/system'
 import { DrawerHeader, Drawer, AppBar } from './DrawerStyles'
 import {
@@ -37,13 +36,21 @@ import {
 	where
 } from 'firebase/firestore'
 import db from '../../firebase/firebase'
-import NotifficationMenu from '../NotifficationMenu/NotifficationMenu'
+import Header from './Header'
 import AvatarPhoto from '../AvatarPhoto/AvatarPhoto'
+import { setLoading } from '../../redux/features/loader/loaderSlice'
 
 function MiniDrawer({
 	loader: { loading },
 	user: {
-		data: { friends, uid, username, photoURL, displayName, requests }
+		data: {
+			friends: friendsIds,
+			uid,
+			username,
+			photoURL,
+			displayName,
+			requests
+		}
 	},
 	dispatch,
 	children,
@@ -53,8 +60,9 @@ function MiniDrawer({
 	const [open, setOpen] = useState(true)
 	const [searchFriends, setSearchFriends] = useState([])
 	const [allUsers, setAllUsers] = useState([])
+	const [noSearchFound, setNoSearchFound] = useState(false)
 	const navigate = useNavigate()
-
+	const [friends, setFriends] = useState([])
 	const routes = [
 		{
 			path: '/',
@@ -74,16 +82,16 @@ function MiniDrawer({
 		setOpen(false)
 	}
 	function handleLogout() {
-		signOut(auth).then(() => {
-			dispatch(setUserData({}))
-			localStorage.removeItem('at')
-			navigate('/sign-in')
-		})
+		navigate('/sign-in')
+		localStorage.removeItem('at')
+		signOut(auth)
+		dispatch(setUserData({}))
 	}
 	async function handleFriendSearch(e) {
 		const searchValue = e.target.value
 		if (searchValue === '') {
 			setSearchFriends([])
+			setNoSearchFound(false)
 			return
 		}
 		if (allUsers.length === 0) {
@@ -95,10 +103,13 @@ function MiniDrawer({
 		const filtered = allUsers.filter(
 			(obj) => obj.username.includes(searchValue) && obj.uid !== uid
 		)
+
 		if (filtered.length === 0 || searchValue === '') {
 			setSearchFriends([])
+			setNoSearchFound(true)
 		} else {
 			setSearchFriends(filtered)
+			setNoSearchFound(false)
 		}
 	}
 	useEffect(() => {
@@ -107,6 +118,13 @@ function MiniDrawer({
 				collection(db, 'users'),
 				where(documentId(), '==', uid)
 			)
+			friendsIds.forEach(async (friendId) => {
+				const res = await getUserById(friendId)
+				if (res && !friends.some((friend) => friend.uid !== friendId)) {
+					setFriends((prev) => [...prev, res])
+				}
+			})
+
 			const unsubscribe = onSnapshot(userRef, (snapshot) => {
 				snapshot.docChanges().forEach((change) => {
 					dispatch(setUserData(change.doc.data()))
@@ -114,7 +132,7 @@ function MiniDrawer({
 			})
 			return () => unsubscribe()
 		}
-	}, [dispatch, uid])
+	}, [dispatch, uid, friends])
 
 	return (
 		<>
@@ -135,42 +153,7 @@ function MiniDrawer({
 								}}>
 								<MenuIcon />
 							</IconButton>
-							<Container maxWidth='fluid'>
-								<Grid container spacing={2}>
-									<Grid xs={9}>
-										<Typography variant='h6' noWrap component='div'>
-											<Box
-												component='span'
-												color={'#ffca28'}
-												fontSize={30}
-												className='logo-font'>
-												Chat-E
-											</Box>
-										</Typography>
-									</Grid>
-									<Grid xs={3} display='flex' alignItems='center'>
-										<Box padding='0 10px' display='flex' alignItems='center'>
-											<NavLink
-												className='profile-link'
-												to={`/profile`}
-												state={userData}>
-												<AvatarPhoto
-													displayName={displayName}
-													photoURL={photoURL}
-												/>
-											</NavLink>
-											<NavLink
-												className='profile-link'
-												to={`/profile`}
-												state={userData}
-												style={{ padding: '5px 15px', fontSize: 18 }}>
-												{username}
-											</NavLink>
-											<NotifficationMenu />
-										</Box>
-									</Grid>
-								</Grid>
-							</Container>
+							<Header />
 						</Toolbar>
 					</AppBar>
 					<Drawer variant='permanent' open={open} id='ce-side-nav'>
@@ -233,14 +216,13 @@ function MiniDrawer({
 							</ListItem>
 						</List>
 					</Drawer>
-					<Container maxWidth='fluid' style={{ height: 'calc(100% - 56px)' }}>
+					<Container
+						maxWidth='fluid'
+						style={{ height: 'calc(100% - 56px)' }}
+						disableGutters>
 						<Box sx={{ flexGrow: 1, height: '100%' }}>
 							<DrawerHeader />
-							<Grid
-								container
-								spacing={2}
-								maxWidth='fluid'
-								style={{ height: '100%' }}>
+							<Grid container maxWidth='fluid' style={{ height: '98%' }}>
 								<Grid xs={9}>
 									<div className='main-nav-window'>{children}</div>
 								</Grid>
@@ -250,21 +232,53 @@ function MiniDrawer({
 											className='search-friends'
 											label='Search for friends'
 											variant='outlined'
-											size='small'
 											fullWidth
+											size='small'
 											onChange={handleFriendSearch}
 										/>
-										<Box>
+										<Box className='search-users-wrap'>
 											{searchFriends.map((user) => (
 												<NestedListItem {...user} key={user.username} />
 											))}
 										</Box>
-										{friends?.length === 0 ? (
+										{noSearchFound && (
+											<Box padding='5px 15px'>
+												<p>404: User not found!</p>
+											</Box>
+										)}
+										<h4
+											style={{
+												borderBottom: '1px solid #ffffff60',
+												paddingBottom: 3
+											}}>
+											Friends list:
+										</h4>
+										{friendsIds?.length === 0 ? (
 											<Box padding='5px 15px'>
 												<p>You currently have no friends :( </p>
 											</Box>
 										) : (
-											''
+											<Box className='friend-list-wrap'>
+												{friends.map((friend) => (
+													<div
+														className='friend-card'
+														key={friend.username}
+														onClick={() =>
+															openChatroom(userData, friend).then((res) => {
+																navigate(`/chat/${friend.username}`, {
+																	state: res
+																})
+															})
+														}>
+														<AvatarPhoto
+															className='friend-item'
+															{...friend}
+															style={{ height: 60, width: 60 }}
+														/>
+														<div>{friend.username}</div>
+													</div>
+												))}
+											</Box>
 										)}
 									</div>
 								</Grid>

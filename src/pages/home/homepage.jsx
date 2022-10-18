@@ -9,7 +9,7 @@ function Homepage() {
 	const {
 		data: { chatrooms, }
 	} = useSelector((state) => state.user)
-
+	document.title = 'Chatrooms | Chat-E'
 	return (
 		<Container maxWidth='fluid' style={{ height: 'calc(100% - 56px)' }}>
 			<Grid container spacing={2} maxWidth='fluid' style={{ height: '100%' }}>

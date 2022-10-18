@@ -19,6 +19,9 @@ import PublicRoute from './services/PublicRoute'
 import { getStorageToken, getUserById } from './services/services'
 import { setLoading } from './redux/features/loader/loaderSlice'
 import { useJwt } from 'react-jwt'
+import Chatroom from './pages/chat/chatroom'
+import { doc, updateDoc } from 'firebase/firestore'
+import db from './firebase/firebase'
 
 const darkTheme = createTheme({
 	palette: {
@@ -32,20 +35,11 @@ function App({ dispatch }) {
 	const auth = getAuth()
 	const authToken = getStorageToken('at')
 	const { isExpired } = useJwt(authToken)
-	// const [users, setUsers] = useState()
-	// const usersRef = collection(db, 'users')
-	// useEffect(() => {
-	// 	const unsubscribe = onSnapshot(usersRef, (snapshot) => {
-	// 		setUsers(snapshot.docs.map((user) => user.data()))
-	// 	})
-	// 	return () => {
-	// 		unsubscribe()
-	// 	}
-	// }, [])
+
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-			dispatch(setLoading(true))
 			if (currentUser) {
+				dispatch(setLoading(true))
 				localStorage.setItem('at', currentUser.accessToken)
 				const {
 					uid,
@@ -58,22 +52,27 @@ function App({ dispatch }) {
 				} = currentUser
 				const user = await getUserById(uid)
 				if (user) {
-					dispatch(
-						setUserData({
-							uid,
-							email,
-							emailVerified,
-							displayName,
-							accessToken,
-							phoneNumber,
-							photoURL,
-							...user
-						})
-					)
+					const userRef = doc(db, 'users', uid)
+					const date = Date.now()
+					await updateDoc(userRef, {
+						lastLoginAt: date
+					}).then(() => {
+						dispatch(
+							setUserData({
+								uid,
+								email,
+								emailVerified,
+								displayName,
+								accessToken,
+								phoneNumber,
+								photoURL,
+								...user,
+								lastLoginAt: date
+							})
+						)
+					})
 				}
 				dispatch(setLoading(false))
-			} else {
-				localStorage.removeItem('at')
 			}
 		})
 		return () => {
@@ -84,6 +83,22 @@ function App({ dispatch }) {
 		<ThemeProvider theme={darkTheme}>
 			<CssBaseline />
 			<Routes>
+				<Route
+					path='/sign-in'
+					element={
+						<PublicRoute isExpired={isExpired}>
+							<Login />
+						</PublicRoute>
+					}
+				/>
+				<Route
+					path='/sign-up'
+					element={
+						<PublicRoute isExpired={isExpired}>
+							<Register />
+						</PublicRoute>
+					}
+				/>
 				<Route
 					path='/'
 					element={
@@ -115,19 +130,13 @@ function App({ dispatch }) {
 					}
 				/>
 				<Route
-					path='/sign-in'
+					path='/chat/:username'
 					element={
-						<PublicRoute isExpired={isExpired}>
-							<Login />
-						</PublicRoute>
-					}
-				/>
-				<Route
-					path='/sign-up'
-					element={
-						<PublicRoute isExpired={isExpired}>
-							<Register />
-						</PublicRoute>
+						<PrivateRoute isExpired={isExpired}>
+							<Drawer>
+								<Chatroom />
+							</Drawer>
+						</PrivateRoute>
 					}
 				/>
 			</Routes>

@@ -11,26 +11,22 @@ function Profile() {
 	const { data: userData } = useSelector((state) => state.user)
 	const { username: userParam } = useParams()
 	const location = useLocation()
+	document.title = user?.username
 	useEffect(() => {
 		async function fetchUser() {
 			const [resUser] = await getUserByUsername(userParam)
-			setUser(resUser)
+			return resUser
 		}
-		// USER PROFILE /user/:username
 		if (userParam) {
-			if (!location.state && !user) {
-				fetchUser()
+			if (!location.state) {
+				fetchUser().then((res) => setUser(res))
 			} else {
 				setUser(location.state)
 			}
-			// CURRENT USER PROFILE /profile
 		} else {
 			setUser(userData)
 		}
-		if (user) {
-			document.title = user.username
-		}
-	}, [location.state])
+	}, [location.state, userData, userParam])
 	if (userParam === userData.username) {
 		return <Navigate to='/profile' />
 	}
@@ -40,6 +36,7 @@ function Profile() {
 				<Grid container maxWidth='fluid'>
 					<header className='profile-header'>
 						<AvatarPhoto
+							username={user.username}
 							displayName={user.displayName}
 							photoURL={user.photoURL}
 							style={{ height: 180, width: 180 }}

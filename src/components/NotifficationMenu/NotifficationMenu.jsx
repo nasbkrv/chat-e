@@ -1,14 +1,20 @@
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Avatar, Button, Fade } from '@mui/material'
+import {  Button, Fade } from '@mui/material'
 import { Box } from '@mui/system'
+import { arrayUnion, doc, getDoc, updateDoc } from 'firebase/firestore'
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
+import db from '../../firebase/firebase'
 import { getInitials } from '../../services/services'
+import AvatarPhoto from '../AvatarPhoto/AvatarPhoto'
 import { StyledBadge, StyledNotifMenu } from '../Drawer/DrawerStyles'
 
 function NotifficationMenu() {
-	const { requests } = useSelector((state) => state.user.data)
+	const {
+		data: { requests, uid: recivingUid, displayName },
+		data: curentUserData
+	} = useSelector((state) => state.user)
 	const [anchorEl, setAnchorEl] = useState(false)
 	const openNotif = Boolean(anchorEl)
 	const handleNotifShow = (event) => {
@@ -16,6 +22,35 @@ function NotifficationMenu() {
 	}
 	const handleNotifHide = () => {
 		setAnchorEl(null)
+	}
+	// user == sending user
+	async function acceptFriendReq(user) {
+		const recivingUserRef = doc(db, 'users', recivingUid)
+		const recivingUserDoc = await getDoc(recivingUserRef)
+		// Get requests array and filter it out of current user
+		const requests = recivingUserDoc
+			.data()
+			.requests.filter((obj) => obj.uid !== user.uid)
+		await updateDoc(recivingUserRef, {
+			friends: arrayUnion(user.uid),
+			requests: requests
+		})
+		const sendingUserRef = doc(db, 'users', user.uid)
+		await updateDoc(sendingUserRef, {
+			friends: arrayUnion(curentUserData.uid)
+		})
+	}
+	async function declineFriendReq(user) {
+		const recivingUserRef = doc(db, 'users', recivingUid)
+		const recivingUserDoc = await getDoc(recivingUserRef)
+		// Get requests array and filter it out of current user
+		const requests = recivingUserDoc
+			.data()
+			.requests.filter((obj) => obj.uid !== user.uid)
+		console.log(requests)
+		await updateDoc(recivingUserRef, {
+			requests: requests
+		})
 	}
 	return (
 		<>
@@ -53,8 +88,10 @@ function NotifficationMenu() {
 							display='flex'
 							alignItems='center'
 							padding='5px 15px'>
-							<Avatar
-								alt={getInitials(user.displayName)}
+							<AvatarPhoto
+								username={user.username}
+								displayName={displayName}
+								alt={getInitials(user.displayName, user.username)}
 								src={user.photoURL}
 								sx={{ width: 56, height: 56 }}
 							/>
@@ -64,12 +101,14 @@ function NotifficationMenu() {
 								</Box>
 								<Box className='btns-wrap'>
 									<Button
+										onClick={() => acceptFriendReq(user)}
 										size='small'
 										className='btn-accept'
 										variant='contained'>
 										Accept
 									</Button>
 									<Button
+										onClick={() => declineFriendReq(user)}
 										size='small'
 										className='btn-decline'
 										variant='outlined'>

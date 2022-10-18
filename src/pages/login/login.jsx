@@ -20,12 +20,13 @@ function Login({ isExpired }) {
 	const navigate = useNavigate()
 	function handleFormSubmit(event) {
 		event.preventDefault()
+		event.stopPropagation()
 		const formData = new FormData(event.target)
 		const { email, password } = Object.fromEntries(formData.entries())
 		signInWithEmailAndPassword(auth, email, password).then(({ user }) => {
 			const { accessToken } = user
 			localStorage.setItem('at', accessToken)
-			if (user) navigate('/')
+			// if (user) navigate('/')
 		})
 	}
 

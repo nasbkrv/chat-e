@@ -46,3 +46,16 @@
 	color: #fff;
 	text-decoration: none;
 }
+.friends-list{
+	.search-users-wrap{
+		max-height: 244px;
+		overflow: hidden;
+		overflow-y: auto;
+	}
+	.friend-list-wrap{
+		padding-top: 10px;
+		.friend-card{
+			text-align: center;
+		}
+	}
+}

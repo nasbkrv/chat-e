@@ -20,13 +20,14 @@ const inputStyles = {
 }
 function Register({ loading }) {
 	const auth = getAuth()
-	const [invalidForm, setInvalidForm] = useState({
-		email: false,
+	const formDefaultState = {
 		username: false,
+		email: false,
 		password: false,
 		rePasword: false,
 		msg: ''
-	})
+	}
+	const [invalidForm, setInvalidForm] = useState(formDefaultState)
 	const [failedReg, setFailedReg] = useState()
 	if (auth.currentUser) {
 		return <Navigate to='/' />
@@ -74,13 +75,7 @@ function Register({ loading }) {
 	}
 	async function handleRegister(event) {
 		event.preventDefault()
-		setInvalidForm({
-			username: false,
-			email: false,
-			password: false,
-			rePasword: false,
-			msg:''
-		})
+		setInvalidForm(formDefaultState)
 		const formData = new FormData(event.target)
 		const { username, email, password, rePassword } = Object.fromEntries(
 			formData.entries()
@@ -96,30 +91,30 @@ function Register({ loading }) {
 			switch (true) {
 				case code === 'invalid-username':
 					setInvalidForm({
+						formDefaultState,
 						username: true,
-						...invalidForm,
 						msg
 					})
 					break
 
 				case code === 'invalid-email':
 					setInvalidForm({
+						formDefaultState,
 						email: true,
-						...invalidForm,
 						msg
 					})
 					break
 				case code === 'pass-short':
 					setInvalidForm({
+						formDefaultState,
 						password: true,
-						...invalidForm,
 						msg
 					})
 					break
 				case code === 'pass-mismatch':
 					setInvalidForm({
+						formDefaultState,
 						rePasword: true,
-						...invalidForm,
 						msg
 					})
 					break

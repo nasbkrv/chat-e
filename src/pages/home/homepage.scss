@@ -1,5 +1,5 @@
 .friends-list {
-	padding-top: 16px;
+	padding: 16px ;
 	.search-friends {
 		.MuiInputBase-root {
 			background-color: #272727;
@@ -19,10 +19,14 @@
 			}
 		}
 	}
+	.friend-list-wrap{
+		display: flex;
+		justify-content: space-around;
+		margin-top: 10px;
+	}
 }
 .main-nav-window{
-	padding-top:  1.5rem;
-	height: 100%;
+	height: calc(100vh - 64px);
 	h2{
 		margin: 0;
 		margin-top: .5rem;

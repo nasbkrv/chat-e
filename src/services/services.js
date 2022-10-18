@@ -1,11 +1,17 @@
 import {
+	addDoc,
+	arrayUnion,
 	collection,
 	doc,
+	documentId,
 	getDoc,
 	getDocs,
 	query,
+	setDoc,
+	updateDoc,
 	where
 } from 'firebase/firestore'
+import { Navigate } from 'react-router'
 import db from '../firebase/firebase'
 
 // Get local storage token by token name
@@ -34,15 +40,53 @@ export async function getAllUsers() {
 export async function getUserByUsername(username) {
 	const q = query(collection(db, 'users'), where('username', '==', username))
 	const querySnapshot = await getDocs(q)
-	return querySnapshot.empty ? false : querySnapshot.docs.map((doc) => doc.data())
+	return querySnapshot.empty
+		? false
+		: querySnapshot.docs.map((doc) => doc.data())
 }
 // Get user's initials from username
-export function getInitials(displayName) {
-	if (!displayName) {
-		return 'JD'
+export function getInitials(displayName, username) {
+	if (displayName) {
+		const nameSplit = displayName.split(' ')
+		const firstName = nameSplit[0][0]
+		const lastName = nameSplit[nameSplit.length - 1][0]
+		return `${firstName}${lastName}`
+	} else {
+		// get first letter from username
+		return username[0].toUpperCase()
 	}
-	const nameSplit = displayName.split(' ')
-	const firstName = nameSplit[0][0]
-	const lastName = nameSplit[nameSplit.length - 1][0]
-	return `${firstName}${lastName}`
+}
+//Function to check if users are friends
+export function checkIfFriends(user1, user2) {
+	return user1.friends.some((obj) => obj.uid === user2.uid)
+}
+// Function to open chatroom
+export async function openChatroom(currentUser, user) {
+	const chatroomName = [currentUser.username, user.username].sort().join('&')
+	const chatroomRef = collection(db, 'chatrooms')
+	const q = query(chatroomRef, where(documentId(), '==', chatroomName))
+	const res = await getDocs(q)
+	if (res.empty) {
+		const firstUserRef = doc(db, 'users', currentUser.uid)
+		const secondUserRef = doc(db, 'users', user.uid)
+
+		await updateDoc(firstUserRef, {
+			chatrooms: arrayUnion(chatroomName)
+		})
+		await updateDoc(secondUserRef, {
+			chatrooms: arrayUnion(chatroomName)
+		})
+		await setDoc(doc(chatroomRef, chatroomName), {
+			photo: '',
+			messages: []
+		})
+		return {
+			user,
+			photo: '',
+			messages: []
+		}
+	} else {
+		const [chatroom] = res.docs.map((doc) => doc.data())
+		return {...chatroom, user}
+	}
 }

@@ -9,7 +9,11 @@ const userSlice = createSlice({
 	initialState,
 	reducers: {
 		setUserData: (state, action) => {
-			state.data = { ...state.data, ...action.payload }
+			if (Object.keys(action.payload).length > 0) {
+				state.data = { ...state.data, ...action.payload }
+			} else {
+				state.data = action.payload
+			}
 		}
 	}
 })
