@@ -9,7 +9,7 @@ function AvatarPhoto({ photoURL, displayName, username, style, className }) {
 				<Avatar
 					alt={getInitials(displayName, username)}
 					src={photoURL}
-					sx={{ bgcolor: '#ffca28', color: '#21242e' ,...style}}
+					sx={{ ...style}}
 				/>
 			) : (
 				<Avatar

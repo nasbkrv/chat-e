@@ -118,12 +118,16 @@ function MiniDrawer({
 				collection(db, 'users'),
 				where(documentId(), '==', uid)
 			)
+			const friendsArr = []
 			friendsIds.forEach(async (friendId) => {
 				const res = await getUserById(friendId)
-				if (res && !friends.some((friend) => friend.uid !== friendId)) {
-					setFriends((prev) => [...prev, res])
+				if (res && !friendsArr.some((friend) => friend.uid !== friendId)) {
+					friendsArr.push(res)
 				}
 			})
+			if (friends.length === 0) {
+				setFriends(friendsArr)
+			}
 
 			const unsubscribe = onSnapshot(userRef, (snapshot) => {
 				snapshot.docChanges().forEach((change) => {

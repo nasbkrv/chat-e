@@ -47,7 +47,6 @@ function NotifficationMenu() {
 		const requests = recivingUserDoc
 			.data()
 			.requests.filter((obj) => obj.uid !== user.uid)
-		console.log(requests)
 		await updateDoc(recivingUserRef, {
 			requests: requests
 		})

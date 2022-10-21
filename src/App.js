@@ -143,6 +143,7 @@ function App({ dispatch }) {
 		</ThemeProvider>
 	)
 }
+
 const mapStateToProps = (state) => {
 	return state
 }
