@@ -1,5 +1,4 @@
 import {
-	addDoc,
 	arrayUnion,
 	collection,
 	doc,
@@ -11,7 +10,7 @@ import {
 	updateDoc,
 	where
 } from 'firebase/firestore'
-import { Navigate } from 'react-router'
+import CryptoJS from 'crypto-js'
 import db from '../firebase/firebase'
 
 // Get local storage token by token name
@@ -89,4 +88,20 @@ export async function openChatroom(currentUser, user) {
 		const [chatroom] = res.docs.map((doc) => doc.data())
 		return {...chatroom, user}
 	}
+}
+// Encrypt message
+export function encryptMessage(message) {
+	const encryptedMessage = CryptoJS.AES.encrypt(
+		message,
+		process.env.REACT_APP_ENCRYPT_KEY
+	).toString()
+	return encryptedMessage
+}
+// Decrypt message
+export function decryptMessage(message) {
+	const decryptedMessage = CryptoJS.AES.decrypt(
+		message,
+		process.env.REACT_APP_ENCRYPT_KEY
+	).toString(CryptoJS.enc.Utf8)
+	return decryptedMessage
 }
