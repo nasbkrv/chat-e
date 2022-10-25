@@ -21,7 +21,7 @@ export function getStorageToken(token) {
 export async function getUserById(id) {
 	const docSnap = await getDoc(doc(db, 'users', id))
 	if (docSnap.exists()) {
-		return docSnap.data()
+		return { ...docSnap.data(), uid: id }
 	} else {
 		throw new Error('No user found by this ID!')
 	}
@@ -57,7 +57,7 @@ export function getInitials(displayName, username) {
 }
 //Function to check if users are friends
 export function checkIfFriends(user1, user2) {
-	return user1.friends.some((obj) => obj.uid === user2.uid)
+	return user1.friends.includes(user2.uid)
 }
 // Function to open chatroom
 export async function openChatroom(currentUser, user) {
@@ -86,7 +86,7 @@ export async function openChatroom(currentUser, user) {
 		}
 	} else {
 		const [chatroom] = res.docs.map((doc) => doc.data())
-		return {...chatroom, user}
+		return { ...chatroom, user }
 	}
 }
 // Encrypt message

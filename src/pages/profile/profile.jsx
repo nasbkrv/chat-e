@@ -39,7 +39,7 @@ function Profile() {
 							username={user.username}
 							displayName={user.displayName}
 							photoURL={user.photoURL}
-							style={{ height: 180, width: 180 }}
+							style={{ height: 180, width: 180, fontSize:'3rem' }}
 						/>
 						<h1>
 							<span className='username-prefix'>@</span>

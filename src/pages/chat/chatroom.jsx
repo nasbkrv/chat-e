@@ -25,13 +25,13 @@ function Chatroom() {
 	} = useSelector((state) => state.user)
 	const location = useLocation()
 	const { username } = useParams()
-	const ref = useRef()
+	const ref = useRef(null)
 	const [messages, setMessages] = useState(null)
 	const [user, setUser] = useState(null)
 	const date = new Date(Number(user?.lastLoginAt))
 	const [chatRoomName, setChatRoomName] = useState('')
+	
 	useEffect(() => {
-		ref?.current?.scrollIntoView({ behavior: 'smooth' })
 		setChatRoomName([userData.username, user?.username].sort().join('&'))
 		if (!location.state) {
 			getUserByUsername(username).then(async (res) => {
@@ -44,7 +44,7 @@ function Chatroom() {
 			setUser(location.state.user)
 			setMessages(location.state.messages)
 		}
-	}, [location.state, user?.username])
+	}, [location.state, user?.username, username, userData])
 	useEffect(() => {
 		if (chatRoomName) {
 			const unsubscribe = onSnapshot(
@@ -56,6 +56,9 @@ function Chatroom() {
 			return unsubscribe
 		}
 	}, [chatRoomName])
+	useEffect(() => {
+		ref?.current?.scrollIntoView({ behavior: 'smooth' })
+	}, [messages])
 	return (
 		<>
 			{messages ? (
@@ -131,218 +134,5 @@ function Chatroom() {
 		</>
 	)
 }
-const chatMessages = [
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '456',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message: 'Hello3',
-		status: 'sent',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '123',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	},
-	{
-		message:
-			'Hello2 <img class="emoji" src="https://cdn.jsdelivr.net/npm/emoji-datasource-twitter/img/twitter/64/1f60d.png"/>',
-		status: 'delivered',
-		photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-		uid: '123',
-		sender: {
-			displayName: 'John Doe',
-			photoURL: 'https://randomuser.me/api/portraits/lego/1.jpg',
-			uid: '456',
-			username: 'johndoe',
-			createdAt: 1666089981000
-		},
-		createdAt: 1666089981000
-	}
-]
 
 export default Chatroom

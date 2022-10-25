@@ -7,25 +7,21 @@ import { useTheme } from '@emotion/react'
 import { Button } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { decryptMessage, encryptMessage } from '../../services/services'
+import { encryptMessage } from '../../services/services'
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore'
 import db from '../../firebase/firebase'
 import { useSelector } from 'react-redux'
 import { v4 as uuidv4 } from 'uuid'
 function useOutsideAlerter(ref) {
 	useEffect(() => {
-		/**
-		 * Alert if clicked on outside of element
-		 */
+		// Check if user clicks outside emoji picker
 		function handleClickOutside(event) {
 			if (ref.current && !ref.current.contains(event.target)) {
 				document.querySelector('.custom-emoji-picker').classList.remove('show')
 			}
 		}
-		// Bind the event listener
 		document.addEventListener('mousedown', handleClickOutside)
 		return () => {
-			// Unbind the event listener on clean up
 			document.removeEventListener('mousedown', handleClickOutside)
 		}
 	}, [ref])
@@ -66,7 +62,6 @@ function ChatFooter({ chatroomId }) {
 	useOutsideAlerter(emojiPickerRef)
 	async function sendMessage(e) {
 		e.preventDefault()
-		console.log(chatroomId)
 		const inputMessage = document.getElementById('editable').innerHTML
 		const encryptedMessage = encryptMessage(inputMessage)
 		const chatRoomRef = doc(db, 'chatrooms', chatroomId)
@@ -81,13 +76,14 @@ function ChatFooter({ chatroomId }) {
 					username: username
 				}
 			}),
+			seen:false,
 			lastUpdated: Date.now()
 		})
 			.then((res) => {
 				console.log('Written to db')
 			})
 			.catch((err) => {
-				console.log(err)
+				console.error(err)
 			})
 		htmlRef.current = ''
 	}

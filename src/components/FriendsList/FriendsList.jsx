@@ -55,29 +55,28 @@ function FriendsList() {
 	}
 	useEffect(() => {
 		if (uid) {
-			const userRef = query(
-				collection(db, 'users'),
-				where(documentId(), '==', uid)
-			)
-			const friendsArr = []
+			const promises = []
 			friendsIds.forEach(async (friendId) => {
-				const res = await getUserById(friendId)
-				if (res && !friendsArr.some((friend) => friend.uid !== friendId)) {
-					friendsArr.push(res)
-				}
+				promises.push(getUserById(friendId))
 			})
-			if (friends.length === 0) {
-				setFriends(friendsArr)
-			}
-
-			const unsubscribe = onSnapshot(userRef, (snapshot) => {
-				snapshot.docChanges().forEach((change) => {
-					dispatch(setUserData(change.doc.data()))
-				})
+			Promise.all(promises).then((res) => {
+				setFriends(res)
 			})
-			return () => unsubscribe()
 		}
-	}, [dispatch, uid, friends])
+	}, [dispatch, uid, friendsIds])
+	useEffect(() => {
+		const userRef = query(
+			collection(db, 'users'),
+			where(documentId(), '==', uid)
+		)
+		const unsubscribe = onSnapshot(userRef, (snapshot) => {
+			snapshot.docChanges().forEach((change) => {
+				dispatch(setUserData(change.doc.data()))
+			})
+		})
+		return () => unsubscribe()
+	}, [dispatch, uid])
+
 	return (
 		<Grid xs={3} style={{ borderLeft: '1px solid #272727' }}>
 			<div className='friends-list'>

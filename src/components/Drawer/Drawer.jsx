@@ -23,36 +23,13 @@ import { connect } from 'react-redux'
 import { setUserData } from '../../redux/features/user/userSlice'
 import Loader from '../Loader/Loader'
 import Grid from '@mui/material/Unstable_Grid2/Grid2'
-import { TextField } from '@mui/material'
-import NestedListItem from '../List/NestedListItem'
-import { getAllUsers, getUserById, openChatroom } from '../../services/services'
 import { Container } from '@mui/system'
 import { DrawerHeader, Drawer, AppBar } from './DrawerStyles'
-import {
-	collection,
-	documentId,
-	onSnapshot,
-	query,
-	where
-} from 'firebase/firestore'
-import db from '../../firebase/firebase'
 import Header from './Header'
-import AvatarPhoto from '../AvatarPhoto/AvatarPhoto'
-import { setLoading } from '../../redux/features/loader/loaderSlice'
 import FriendsList from '../FriendsList/FriendsList'
 
 function MiniDrawer({
 	loader: { loading },
-	user: {
-		data: {
-			friends: friendsIds,
-			uid,
-			username,
-			photoURL,
-			displayName,
-			requests
-		}
-	},
 	dispatch,
 	children,
 	user: { data: userData }

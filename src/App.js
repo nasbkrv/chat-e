@@ -1,6 +1,4 @@
 import './App.scss'
-// import { collection, getDocs, onSnapshot } from 'firebase/firestore'
-// import db from './firebase/firebase'
 import Drawer from './components/Drawer/Drawer'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
